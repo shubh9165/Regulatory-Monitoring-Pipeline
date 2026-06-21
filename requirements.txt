@@ -14,5 +14,4 @@ pydantic
 langgraph
 bs4
 apscheduler
-sqlite3
 fastapi
