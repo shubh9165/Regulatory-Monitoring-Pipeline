@@ -1,10 +1,16 @@
-# 📄 AI Regulatory Monitoring Pipeline
+# 📄 AI Regulatory Monitoring System
 
-An autonomous LangGraph agent that monitors Indian financial regulators (**RBI, SEBI, IRDAI**) for new circulars and announcements, classifies what's genuinely new versus previously seen, and generates structured compliance reports — fully automated via a scheduler and triggerable through a Streamlit dashboard.
+An autonomous LangGraph agent that monitors Indian financial regulators — **RBI, SEBI, and IRDAI** — for new circulars and announcements, classifies what's genuinely new versus previously seen, and generates structured reports, triggered through a Streamlit dashboard.
 
 ## Why this exists
 
-Compliance teams at financial institutions manually track regulator websites for new circulars, notifications, and policy changes — a slow, error-prone process where missed updates carry real regulatory risk. This pipeline automates that monitoring loop: it watches a regulator's site, diffs new content against what's already been seen, classifies it, and reports on it — no manual page-checking required.
+Compliance teams at financial institutions manually track regulator websites for new circulars, notifications, and policy changes — a slow, error-prone process where a missed update carries real regulatory risk. This pipeline automates that monitoring loop: it checks a selected regulator's site, diffs new content against what's already been seen, classifies it, and produces a report — no manual page-checking required.
+
+## Demo
+
+![Streamlit UI](docs/screenshot.png)
+
+*Select a regulator (RBI / SEBI / IRDAI), enter a notification email, and start monitoring.*
 
 ## How it works
 
@@ -12,7 +18,7 @@ Compliance teams at financial institutions manually track regulator websites for
 Streamlit UI (select regulator + email)
         │
         ▼
-   APScheduler (runs every interval)
+   Scheduler (runs daily)
         │
         ▼
    run_pipeline() in app.py
@@ -33,23 +39,34 @@ Streamlit UI (select regulator + email)
    Report output (+ email notification)
 ```
 
-The agent maintains state across runs (`document`, `classification_data`, `old_data`, `new_data`, `report`), so it only flags content that's genuinely changed since the last check — not the entire page every time.
+The agent maintains state across runs (`document`, `classification_data`, `old_data`, `new_data`, `report`), so each run only flags content that's genuinely changed since the last check — not the entire page every time.
 
 ## Features
 
-- **Multi-source monitoring** — currently supports RBI, SEBI, and IRDAI, selectable via the UI
+- **Multi-source monitoring** — covers RBI, SEBI, and IRDAI, selectable via the UI
 - **Stateful change detection** — SQLite-backed persistence means the agent only reports on *new* regulatory content, not re-flagging what it already classified
-- **Scheduled automation** — `APScheduler` runs the pipeline on a recurring interval with no manual intervention
+- **Daily scheduled runs** — the pipeline checks each selected source once a day
 - **Streamlit dashboard** — pick a regulator, enter a notification email, and trigger monitoring with one click
 - **Email notifications** — configurable receiver address for alerting on new regulatory updates
+
+## Metrics (current)
+
+| Metric | Value |
+|---|---|
+| Regulatory sources monitored | 3 (RBI, SEBI, IRDAI) |
+| Check frequency | Daily |
+| Storage | SQLite, local |
+| LLM provider | Groq — `<MODEL_NAME>` *(update this with the exact model from `src/graph/graph.py`)* |
+
+> Latency-per-run and classification accuracy numbers are still being collected through real runs and will be added here once available.
 
 ## Tech Stack
 
 | Layer | Technology |
 |---|---|
 | Agent orchestration | LangGraph |
-| LLM | *(add provider/model here, e.g. Groq / OpenAI / etc.)* |
-| Scheduling | APScheduler |
+| LLM | Groq (`<MODEL_NAME>`) |
+| Scheduling | Python scheduler (daily interval) |
 | UI | Streamlit |
 | Storage | SQLite |
 | Notifications | Email (SMTP via `.env` config) |
@@ -60,7 +77,7 @@ The agent maintains state across runs (`document`, `classification_data`, `old_d
 ```
 .
 ├── app.py              # Pipeline entrypoint — builds and invokes the LangGraph agent
-├── scheduler.py         # APScheduler job that runs the pipeline on an interval
+├── scheduler.py         # Scheduler that runs the pipeline daily
 ├── streamlitUi.py        # Streamlit dashboard for selecting a regulator and starting monitoring
 ├── src/
 │   ├── graph/
@@ -74,7 +91,7 @@ The agent maintains state across runs (`document`, `classification_data`, `old_d
 
 ### Prerequisites
 - Python 3.10+
-- An LLM provider API key *(add the specific env var name here)*
+- A Groq API key
 
 ### Installation
 
@@ -91,31 +108,25 @@ Create a `.env` file in the project root:
 ```
 website=RBI
 receiver=your-email@example.com
-# add LLM API key variable(s) here
+GROQ_API_KEY=your-groq-api-key
 ```
 
 ### Running
 
-**Option 1 — Streamlit dashboard (recommended)**
+**Streamlit dashboard**
 ```bash
 streamlit run streamlitUi.py
 ```
 Select a regulator (RBI / SEBI / IRDAI), enter an email address, and click **Start Monitoring**.
 
-**Option 2 — Run the scheduler directly**
-```bash
-python scheduler.py
-```
-This runs the pipeline immediately, then on a recurring interval.
-
-**Option 3 — Single pipeline run**
+**Single pipeline run (no UI)**
 ```bash
 python app.py
 ```
 
 ## Example Output
 
-*(Add one real run here — paste an actual `report` output from your pipeline once you have one. This is the single most convincing thing you can add to this README.)*
+*(To be added — paste an actual `report` output from a real run here once available. This is the single most convincing addition to this README, more than any other section.)*
 
 ```
 Document: ...
@@ -126,9 +137,14 @@ Report: ...
 
 ## Roadmap
 
+- [ ] Run the scheduler as a fully independent background process, decoupled from the Streamlit UI session, so monitoring continues even if the dashboard tab is closed
+- [ ] Add a "Stop Monitoring" control and live status indicator to the UI
+- [ ] Collect and publish real latency and classification-accuracy metrics
 - [ ] Add more regulator sources beyond RBI/SEBI/IRDAI
-- [ ] Replace polling interval with smarter change-detection (e.g. hash-based diffing before invoking the LLM, to cut cost)
 - [ ] Add structured report export (PDF/CSV)
 - [ ] Add basic test coverage for the classification step
 - [ ] Containerize with Docker for easier deployment
 
+## License
+
+MIT
