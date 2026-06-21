@@ -28,20 +28,6 @@ def run_pipeline():
     # Save updated data
     update_old_data(website,result['old_data'])
 
-    print("Document:")
-    print(result["document"])
-    print("-" * 50)
-
-    print("Classification:")
-    print(result["clasification_data"])
-    print("-" * 50)
-
-    print("New Data:")
-    print(result["new_data"])
-    print("-" * 50)
-
-    print("Report:")
-    print(result["report"])
-    print("-" * 50)
+ 
 
 
