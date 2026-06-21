@@ -5,6 +5,6 @@ def start():
     scheduler=BlockingScheduler()
     run_pipeline()
 
-    scheduler.add_job(run_pipeline, "interval", minutes=1)
+    scheduler.add_job(run_pipeline, "interval", hours=1)
 
     scheduler.start()
