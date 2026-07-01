@@ -15,3 +15,4 @@ langgraph
 bs4
 apscheduler
 fastapi
+torchvision
